@@ -1,6 +1,7 @@
 import React from "react";
 import Products from "./components/Products";
 import "./App.css";
+import Filter from "./components/Filter";
 
 class App extends React.Component {
   constructor(props) {
@@ -9,6 +10,8 @@ class App extends React.Component {
       products: [],
       filteredProducts: []
     };
+    this.handleChangeSort = this.handleChangeSort.bind(this);
+    this.handleChangeSize = this.handleChangeSize.bind(this);
   }
   componentWillMount() {
     fetch("http://localhost:8000/products")
@@ -21,6 +24,42 @@ class App extends React.Component {
       );
   }
 
+  listProducts() {
+    this.setState(state => {
+      if (state.sort !== "") {
+        state.products.sort((a, b) =>
+          state.sort === "lowest"
+            ? a.price > b.price
+              ? 1
+              : -1
+            : a.price < b.price
+            ? 1
+            : -1
+        );
+      } else {
+        state.products.sort((a, b) => (a.id < b.id ? 1 : -1));
+      }
+
+      if (state.size !== "") {
+        return {
+          filteredProducts: state.products.filter(
+            a => a.availableSizes.indexOf(state.size.toUpperCase()) >= 0
+          )
+        };
+      }
+      return { filteredProducts: state.products };
+    });
+  }
+  handleChangeSort = e => {
+    this.setState({ sort: e.target.value });
+    this.listProducts();
+  };
+
+  handleChangeSize = e => {
+    this.setState({ size: e.target.value });
+    this.listProducts();
+  };
+
   render() {
     return (
       <div className="container">
@@ -28,6 +67,14 @@ class App extends React.Component {
         <hr />
         <div className="row">
           <div className="col-md-8">
+            <Filter
+              size={this.state.size}
+              sort={this.state.sort}
+              handleChangeSize={this.handleChangeSize}
+              handleChangeSort={this.handleChangeSort}
+              count={this.state.filteredProducts.length}
+            />
+            <hr />
             <Products
               products={this.state.filteredProducts}
               handleAddToCart={this.handleAddToCart}
